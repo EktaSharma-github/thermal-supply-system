@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal Supply System</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Lucide icons as inline SVG components
+        const Calendar = ({ className = "w-4 h-4" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+        );
+
+        const Settings = ({ className = "w-4 h-4" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        );
+
+        const ThermalSupplySystem = () => {
+            const [activeTab, setActiveTab] = useState('input');
+            const [thermalAvailability, setThermalAvailability] = useState(85);
+            const [istsLoss, setIstsLoss] = useState(4);
+            const [selectedYear, setSelectedYear] = useState(2025);
+            const [selectedMonth, setSelectedMonth] = useState('Jan');
+            const [selectedPlant, setSelectedPlant] = useState('All');
+
+            // Mock plant data
+            const plantData = [
+                {
+                    name: 'Farakka-I&II',
+                    type: 'ISGS Thermal',
+                    cod: '1987-03-15',
+                    totalIC: 1600,
+                    unitWiseCapacity: [200, 200, 200, 200, 200, 200, 200, 200],
+                    shareAllocation: 8.5,
+                    cgShare: 136,
+                    auxConsumption: 8.16,
+                    terminationDate: '2045-11-20',
+                    finalValueAfterISTS: 43.92
+                },
+                {
+                    name: 'NTPC Korba',
+                    type: 'ISGS Thermal',
+                    cod: '1988-12-10',
+                    totalIC: 2600,
+                    unitWiseCapacity: [200, 200, 200, 210, 210, 210, 500, 500, 500, 500],
+                    shareAllocation: 45.2,
+                    cgShare: 1175.2,
+                    auxConsumption: 70.51,
+                    terminationDate: '2050-03-15',
+                    finalValueAfterISTS: 1060.99
+                },
+                {
+                    name: 'Adani Raigarh',
+                    type: 'IPP Thermal (GNA)',
+                    cod: '2012-05-20',
+                    totalIC: 1350,
+                    unitWiseCapacity: [450, 450, 450],
+                    shareAllocation: 70,
+                    cgShare: 945,
+                    auxConsumption: 66.15,
+                    terminationDate: '2037-05-20',
+                    finalValueAfterISTS: 843.81
+                },
+                {
+                    name: 'CSEB Korba East',
+                    type: 'SGS Thermal',
+                    cod: '1978-08-25',
+                    totalIC: 600,
+                    unitWiseCapacity: [200, 200, 200],
+                    shareAllocation: 100,
+                    cgShare: 600,
+                    auxConsumption: 36,
+                    terminationDate: '2035-12-31',
+                    finalValueAfterISTS: 542.4
+                },
+                {
+                    name: 'Balco CPP',
+                    type: 'IPP Thermal (GNA)',
+                    cod: '2009-11-12',
+                    totalIC: 540,
+                    unitWiseCapacity: [135, 135, 135, 135],
+                    shareAllocation: 85,
+                    cgShare: 459,
+                    auxConsumption: 27.54,
+                    terminationDate: '2039-11-12',
+                    finalValueAfterISTS: 414.46
+                }
+            ];
+
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const years = Array.from({length: 10}, (_, i) => 2025 + i);
+
+            // Calculate final values based on availability and ISTS loss
+            const calculateFinalValue = (cgShare, auxConsumption) => {
+                const availableCapacity = cgShare * (thermalAvailability / 100);
+                const afterAux = availableCapacity - auxConsumption;
+                const afterISTS = afterAux * (1 - istsLoss / 100);
+                return Math.round(afterISTS * 100) / 100;
+            };
+
+            // Generate 96 time blocks (15-minute intervals)
+            const generateTimeBlocks = () => {
+                const blocks = [];
+                for (let hour = 0; hour < 24; hour++) {
+                    for (let minute = 0; minute < 60; minute += 15) {
+                        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+                        const blockNumber = blocks.length + 1;
+                        blocks.push({
+                            block: blockNumber,
+                            time: timeString,
+                            hour,
+                            minute
+                        });
+                    }
+                }
+                return blocks;
+            };
+
+            const timeBlocks = generateTimeBlocks();
+
+            // Generate mock data for a specific plant and month
+            const generateMonthData = (plantName, year, month) => {
+                const plant = plantData.find(p => p.name === plantName);
+                if (!plant) return [];
+
+                const baseValue = calculateFinalValue(plant.cgShare, plant.auxConsumption);
+                const monthData = [];
+
+                // Check if plant is terminated
+                const terminationDate = new Date(plant.terminationDate);
+                const currentDate = new Date(year, months.indexOf(month), 1);
+                
+                if (currentDate > terminationDate) {
+                    // Plant terminated, return zero values
+                    return timeBlocks.map(block => ({
+                        ...block,
+                        monthYear: `${month}-${year}`,
+                        year,
+                        month,
+                        value: 0,
+                        plantName
+                    }));
+                }
+
+                // Generate realistic load curve with some variation
+                timeBlocks.forEach(block => {
+                    let variation = 1;
+                    
+                    // Peak hours (6-10 AM and 6-11 PM) - higher demand
+                    if ((block.hour >= 6 && block.hour <= 10) || (block.hour >= 18 && block.hour <= 23)) {
+                        variation = 0.95 + Math.random() * 0.1; // 95-105%
+                    }
+                    // Off-peak hours (11 PM - 5 AM)
+                    else if (block.hour >= 23 || block.hour <= 5) {
+                        variation = 0.75 + Math.random() * 0.15; // 75-90%
+                    }
+                    // Normal hours
+                    else {
+                        variation = 0.85 + Math.random() * 0.15; // 85-100%
+                    }
+
+                    const value = Math.round(baseValue * variation * 100) / 100;
+
+                    monthData.push({
+                        ...block,
+                        monthYear: `${month}-${year}`,
+                        year,
+                        month,
+                        value,
+                        plantName
+                    });
+                });
+
+                return monthData;
+            };
+
+            const InputScreen = () => (
+                React.createElement('div', { className: 'space-y-6' }, [
+                    React.createElement('div', { className: 'bg-blue-50 p-4 rounded-lg', key: 'config' }, [
+                        React.createElement('h3', { className: 'text-lg font-semibold text-blue-800 mb-4' }, 'Configuration Parameters'),
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-4' }, [
+                            React.createElement('div', { key: 'thermal' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Thermal Availability (%)'),
+                                React.createElement('input', {
+                                    type: 'number',
+                                    value: thermalAvailability,
+                                    onChange: (e) => setThermalAvailability(Number(e.target.value)),
+                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md',
+                                    min: 0,
+                                    max: 100
+                                })
+                            ]),
+                            React.createElement('div', { key: 'ists' }, [
+                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'ISTS Loss (%)'),
+                                React.createElement('input', {
+                                    type: 'number',
+                                    value: istsLoss,
+                                    onChange: (e) => setIstsLoss(Number(e.target.value)),
+                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md',
+                                    min: 0,
+                                    max: 20,
+                                    step: 0.1
+                                })
+                            ])
+                        ])
+                    ]),
+                    React.createElement('div', { className: 'overflow-x-auto', key: 'table' }, [
+                        React.createElement('table', { className: 'w-full border-collapse border border-gray-300 text-sm' }, [
+                            React.createElement('thead', { className: 'bg-gray-50' }, 
+                                React.createElement('tr', {}, [
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-left' }, 'Plant Name'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-left' }, 'Type'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-left' }, 'COD'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-right' }, 'Total IC (MW)'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-left' }, 'Unit Wise Capacity'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-right' }, 'Share Allocation (%)'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-right' }, 'CG Share (MW)'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-right' }, 'Aux Consumption (MW)'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-left' }, 'Termination Date'),
+                                    React.createElement('th', { className: 'border border-gray-300 px-3 py-2 text-right' }, 'Final Value After ISTS (MW)')
+                                ])
+                            ),
+                            React.createElement('tbody', {}, 
+                                plantData.map((plant, index) =>
+                                    React.createElement('tr', { 
+                                        key: index, 
+                                        className: index % 2 === 0 ? 'bg-white' : 'bg-gray-50' 
+                                    }, [
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2 font-medium' }, plant.name),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2' }, 
+                                            React.createElement('span', {
+                                                className: `px-2 py-1 rounded text-xs ${
+                                                    plant.type === 'ISGS Thermal' ? 'bg-blue-100 text-blue-800' :
+                                                    plant.type === 'IPP Thermal (GNA)' ? 'bg-green-100 text-green-800' :
+                                                    'bg-orange-100 text-orange-800'
+                                                }`
+                                            }, plant.type)
+                                        ),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2' }, plant.cod),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2 text-right' }, plant.totalIC),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2' }, 
+                                            plant.unitWiseCapacity.map((cap, i) =>
+                                                React.createElement('span', { 
+                                                    key: i, 
+                                                    className: 'inline-block bg-gray-200 rounded px-1 mr-1 text-xs' 
+                                                }, `U${i+1}: ${cap}MW`)
+                                            )
+                                        ),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2 text-right' }, `${plant.shareAllocation}%`),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2 text-right font-semibold' }, plant.cgShare),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2 text-right' }, plant.auxConsumption),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2' }, plant.terminationDate),
+                                        React.createElement('td', { className: 'border border-gray-300 px-3 py-2 text-right font-semibold text-blue-600' }, 
+                                            calculateFinalValue(plant.cgShare, plant.auxConsumption)
+                                        )
+                                    ])
+                                )
+                            )
+                        ])
+                    ]),
+                    React.createElement('div', { className: 'bg-yellow-50 p-4 rounded-lg', key: 'formula' }, [
+                        React.createElement('h4', { className: 'font-semibold text-yellow-800 mb-2' }, 'Calculation Formula:'),
+                        React.createElement('p', { className: 'text-sm text-yellow-700' }, 'Final Value = ((CG Share × Thermal Availability%) - Aux Consumption) × (1 - ISTS Loss%)'),
+                        React.createElement('p', { className: 'text-xs text-yellow-600 mt-1' }, 'Note: Plants beyond termination date will show zero values in output')
+                    ])
+                ])
+            );
+
+            const OutputScreen = () => {
+                const selectedPlantData = selectedPlant === 'All' ? plantData : plantData.filter(p => p.name === selectedPlant);
+                const monthData = selectedPlantData.flatMap(plant => 
+                    generateMonthData(plant.name, selectedYear, selectedMonth)
+                );
+
+                return React.createElement('div', { className: 'space-y-4' }, [
+                    React.createElement('div', { className: 'grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg', key: 'filters' }, [
+                        React.createElement('div', { key: 'year' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Year'),
+                            React.createElement('select', {
+                                value: selectedYear,
+                                onChange: (e) => setSelectedYear(Number(e.target.value)),
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md'
+                            }, years.map(year =>
+                                React.createElement('option', { key: year, value: year }, year)
+                            ))
+                        ]),
+                        React.createElement('div', { key: 'month' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Month'),
+                            React.createElement('select', {
+                                value: selectedMonth,
+                                onChange: (e) => setSelectedMonth(e.target.value),
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md'
+                            }, months.map(month =>
+                                React.createElement('option', { key: month, value: month }, month)
+                            ))
+                        ]),
+                        React.createElement('div', { key: 'plant' }, [
+                            React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Plant'),
+                            React.createElement('select', {
+                                value: selectedPlant,
+                                onChange: (e) => setSelectedPlant(e.target.value),
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md'
+                            }, [
+                                React.createElement('option', { key: 'all', value: 'All' }, 'All Plants'),
+                                ...plantData.map(plant =>
+                                    React.createElement('option', { key: plant.name, value: plant.name }, plant.name)
+                                )
+                            ])
+                        ])
+                    ]),
+                    React.createElement('div', { className: 'bg-white rounded-lg border', key: 'data-table' }, [
+                        React.createElement('div', { className: 'p-4 border-b bg-gray-50' }, [
+                            React.createElement('h3', { className: 'text-lg font-semibold' }, `Monthly Average Supply Data: ${selectedMonth}-${selectedYear}`),
+                            React.createElement('p', { className: 'text-sm text-gray-600 mt-1' }, '96 Time Blocks (15-minute intervals) - Values averaged across all days in the month')
+                        ]),
+                        React.createElement('div', { className: 'overflow-x-auto max-h-96' }, [
+                            React.createElement('table', { className: 'w-full border-collapse text-xs' }, [
+                                React.createElement('thead', { className: 'bg-gray-100 sticky top-0' },
+                                    React.createElement('tr', {}, [
+                                        React.createElement('th', { className: 'border border-gray-300 px-2 py-1 text-left' }, 'Month-Year'),
+                                        React.createElement('th', { className: 'border border-gray-300 px-2 py-1 text-center' }, 'Year'),
+                                        React.createElement('th', { className: 'border border-gray-300 px-2 py-1 text-center' }, 'Month'),
+                                        React.createElement('th', { className: 'border border-gray-300 px-2 py-1 text-center' }, 'Time'),
+                                        React.createElement('th', { className: 'border border-gray-300 px-2 py-1 text-center' }, 'Block'),
+                                        ...selectedPlantData.map(plant =>
+                                            React.createElement('th', { key: plant.name, className: 'border border-gray-300 px-2 py-1 text-center min-w-20' }, plant.name)
+                                        )
+                                    ])
+                                ),
+                                React.createElement('tbody', {},
+                                    timeBlocks.map(block => {
+                                        const blockData = monthData.filter(d => d.block === block.block);
+                                        return React.createElement('tr', { 
+                                            key: block.block, 
+                                            className: block.block % 2 === 0 ? 'bg-white' : 'bg-gray-50' 
+                                        }, [
+                                            React.createElement('td', { className: 'border border-gray-300 px-2 py-1' }, `${selectedMonth}-${selectedYear}`),
+                                            React.createElement('td', { className: 'border border-gray-300 px-2 py-1 text-center' }, selectedYear),
+                                            React.createElement('td', { className: 'border border-gray-300 px-2 py-1 text-center' }, selectedMonth),
+                                            React.createElement('td', { className: 'border border-gray-300 px-2 py-1 text-center font-mono' }, block.time),
+                                            React.createElement('td', { className: 'border border-gray-300 px-2 py-1 text-center font-semibold' }, block.block),
+                                            ...selectedPlantData.map(plant => {
+                                                const plantBlockData = blockData.find(d => d.plantName === plant.name);
+                                                return React.createElement('td', { 
+                                                    key: plant.name, 
+                                                    className: 'border border-gray-300 px-2 py-1 text-center' 
+                                                }, plantBlockData ? plantBlockData.value : '0');
+                                            })
+                                        ]);
+                                    })
+                                )
+                            ])
+                        ])
+                    ]),
+                    React.createElement('div', { className: 'grid grid-cols-4 gap-4 text-sm', key: 'stats' }, [
+                        React.createElement('div', { className: 'bg-blue-50 p-3 rounded' }, [
+                            React.createElement('div', { className: 'font-semibold text-blue-800' }, 'Total Plants'),
+                            React.createElement('div', { className: 'text-2xl font-bold text-blue-600' }, selectedPlantData.length)
+                        ]),
+                        React.createElement('div', { className: 'bg-green-50 p-3 rounded' }, [
+                            React.createElement('div', { className: 'font-semibold text-green-800' }, 'Total Capacity'),
+                            React.createElement('div', { className: 'text-2xl font-bold text-green-600' }, 
+                                `${selectedPlantData.reduce((sum, plant) => sum + plant.cgShare, 0)} MW`
+                            )
+                        ]),
+                        React.createElement('div', { className: 'bg-orange-50 p-3 rounded' }, [
+                            React.createElement('div', { className: 'font-semibold text-orange-800' }, 'Available Capacity'),
+                            React.createElement('div', { className: 'text-2xl font-bold text-orange-600' }, 
+                                `${Math.round(selectedPlantData.reduce((sum, plant) => sum + calculateFinalValue(plant.cgShare, plant.auxConsumption), 0))} MW`
+                            )
+                        ]),
+                        React.createElement('div', { className: 'bg-purple-50 p-3 rounded' }, [
+                            React.createElement('div', { className: 'font-semibold text-purple-800' }, 'Utilization'),
+                            React.createElement('div', { className: 'text-2xl font-bold text-purple-600' }, `${thermalAvailability}%`)
+                        ])
+                    ])
+                ]);
+            };
+
+            return React.createElement('div', { className: 'max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen' },
+                React.createElement('div', { className: 'bg-white rounded-lg shadow-lg' }, [
+                    React.createElement('div', { className: 'border-b border-gray-200', key: 'header' }, [
+                        React.createElement('div', { className: 'px-6 py-4' }, [
+                            React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Future Date Supply System - Thermal Plants (10 Years)'),
+                            React.createElement('p', { className: 'text-gray-600 mt-1' }, 'Supply forecasting for ISGS, IPP (GNA) & SGS Thermal Plants')
+                        ]),
+                        React.createElement('div', { className: 'flex space-x-0' }, [
+                            React.createElement('button', {
+                                onClick: () => setActiveTab('input'),
+                                className: `px-6 py-3 text-sm font-medium border-b-2 ${
+                                    activeTab === 'input'
+                                        ? 'border-blue-500 text-blue-600 bg-blue-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`
+                            }, [
+                                React.createElement(Settings, { className: 'inline-block w-4 h-4 mr-2' }),
+                                'Plant Configuration'
+                            ]),
+                            React.createElement('button', {
+                                onClick: () => setActiveTab('output'),
+                                className: `px-6 py-3 text-sm font-medium border-b-2 ${
+                                    activeTab === 'output'
+                                        ? 'border-blue-500 text-blue-600 bg-blue-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`
+                            }, [
+                                React.createElement(Calendar, { className: 'inline-block w-4 h-4 mr-2' }),
+                                '96 Block Output Data'
+                            ])
+                        ])
+                    ]),
+                    React.createElement('div', { className: 'p-6', key: 'content' },
+                        activeTab === 'input' ? React.createElement(InputScreen) : React.createElement(OutputScreen)
+                    )
+                ])
+            );
+        };
+
+        ReactDOM.render(React.createElement(ThermalSupplySystem), document.getElementById('root'));
+    </script>
+</body>
+</html>
